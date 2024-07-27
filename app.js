@@ -28,9 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const progressBar = document.getElementById('progress');
   const progressNumbers = document.getElementById('numbers');
   
-  let taskCount = 1;
+  let taskCount =0 ;
   let completedTasks = 0;
   let currentEditTask = null;
+  let tasks = loadTasks();
 
 
   
@@ -44,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
               currentEditTask.querySelector('span:nth-child(1)').textContent = taskTitle;
               currentEditTask.querySelector('span:nth-child(2)').textContent = taskDate;
               currentEditTask.querySelector('p').textContent = taskDesc;
+              saveTasks();
               currentEditTask = null;
           } 
           else {
@@ -65,20 +67,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
               addDeleteFunctionality(newTask);
               addEditFunctionality(newTask);
+              tasks.push({title: taskTitle, date:taskDate, desc: taskDesc});
+              saveTasks();
           }
 
-          updateProgressBar();
 
           clearInputs();
           modal.style.display = 'none';
       }
+    
   });
 
-  function updateProgressBar() {
-      progressNumbers.textContent = `${completedTasks}/${taskCount}`;
-      const progressPercentage = (completedTasks / taskCount) * 100;
-      progressBar.style.width = `${progressPercentage}%`;
-  }
+
   
   function clearInputs() {
       taskTitleInput.value = '';
@@ -89,9 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
   function addDeleteFunctionality(taskElement) {
       const deleteBtn = taskElement.querySelector('.fa-trash-alt');
       deleteBtn.addEventListener('click', () => {
+        const index = Array.from(taskList.children).indexOf(taskElement);
+        tasks.splice(index, 1);
           taskElement.remove();
           taskCount--;
-          updateProgressBar();
+          saveTasks();
+
       });
   }
 
@@ -99,18 +102,45 @@ document.addEventListener('DOMContentLoaded', () => {
       const editBtn = taskElement.querySelector('.fa-edit');
       editBtn.addEventListener('click', () => {
           currentEditTask = taskElement;
-          taskTitleInput.value = taskElement.querySelector('span:nth-child(1)').textContent;
-          taskDateInput.value = taskElement.querySelector('span:nth-child(2)').textContent;
-          taskDescInput.value = taskElement.querySelector('p').textContent;
+          const index = Array.from(taskList.children).indexOf(taskElement);
+          const task = tasks[index];
+          taskTitleInput.value = task.title;
+          taskDateInput.value = task.date;
+          taskDescInput.value = task.desc;
           modal.style.display = 'block';
       });
   }
 
-  document.querySelectorAll('.taches').forEach(task => {
-      addDeleteFunctionality(task);
-      addEditFunctionality(task);
-  });
-
   
-  updateProgressBar();
+  function loadTasks() {
+    const tasksJSON = localStorage.getItem('tasks');
+    if (tasksJSON) {
+      const tasksArray = JSON.parse(tasksJSON);
+      tasksArray.forEach(task => {
+        const taskElement = document.createElement('div');
+        taskElement.classList.add('taches');
+        taskElement.innerHTML = `
+          <span>${task.title}</span>
+          <span>${task.date}</span>
+          <p>${task.desc}</p>
+          <span class="options">
+            <i class="fas fa-edit"></i>
+            <i class="fas fa-trash-alt"></i>
+          </span>
+        `;
+        taskList.appendChild(taskElement);
+        addDeleteFunctionality(taskElement);
+        addEditFunctionality(taskElement);
+        taskCount++;
+      });
+
+      return tasksArray;
+    }
+    return [];
+  }
+
+  function saveTasks() {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }
+
 });

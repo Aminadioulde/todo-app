@@ -58,7 +58,7 @@ body{
 
 }
 #progress{
-    width: 75%;
+    width: 100%;
     height: 10px;
     background-color: var(--teal);
     border-radius: 10px;
